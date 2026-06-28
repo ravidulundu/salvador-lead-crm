@@ -1,121 +1,67 @@
 # Salvador Lead CRM
 
-Self-hosted CRM for Salvador-BA B2B lead tracking using **Baserow**.
+Self-hosted Baserow CRM for Salvador-BA B2B lead tracking.
 
-This replaced the earlier NocoDB version because Baserow has clearer API token support, so Neil can manage leads programmatically.
+## Hostinger deploy
 
-## Stack
+Use this repository in Hostinger Docker Manager:
 
-- Baserow all-in-one Docker image
-- Persistent Docker volume
-- Hostinger Docker Manager
-- Traefik routing in the same style as the working `dulunduztec.com.br` app
+```text
+https://github.com/ravidulundu/salvador-lead-crm
+```
 
-## Security
+The compose follows the provided working Hostinger/Traefik pattern for Baserow.
 
-`docker-compose.yml` contains **no hard-coded passwords or tokens**. Configure secrets in Hostinger environment variables.
+## Required `.env` / environment variables
 
-Required variables:
+```env
+BASEROW_VERSION=2.2.2
+BASEROW_DOMAIN=crm.dulunduztec.com.br
+TRAEFIK_ROUTER_NAME=salvador-lead-crm
+TRAEFIK_SERVICE_NAME=salvador-lead-crm
+SECRET_KEY=CHANGE_ME_LONG_RANDOM_SECRET
+```
 
-| Variable | Example | Notes |
-|---|---|---|
-| `CRM_DOMAIN` | `crm.dulunduztec.com.br` | Kept for Baserow allowed hosts; Traefik label is hardcoded to avoid Hostinger label interpolation issues |
-| `BASEROW_PUBLIC_URL` | `https://crm.dulunduztec.com.br` | Public Baserow URL |
-| `BASEROW_SECRET_KEY` | long random string | Required secret |
-
-Generate secret locally:
+Generate `SECRET_KEY`:
 
 ```bash
 openssl rand -base64 48
 ```
 
-## Dockerfile wrapper
-
-Hostinger's working examples use `build.context` with a GitHub URL. This project follows that pattern with a tiny `Dockerfile`:
-
-```Dockerfile
-FROM baserow/baserow:latest
-```
-
-So Hostinger builds from this repo while still running the official Baserow image.
-
-## Hostinger Docker Manager deploy
-
-1. Create/verify DNS record for `crm.dulunduztec.com.br`.
-2. In Hostinger Docker Manager, create a Compose app from this repository.
-3. Add environment variables from `.env.example` with real values.
-4. Deploy.
-5. Open `https://crm.dulunduztec.com.br`.
-6. Create the first Baserow admin/user account.
-7. Create a workspace/database for Salvador leads.
-8. Create a database token so Neil can access the API.
-
-## Traefik labels
-
-The compose now mirrors your working Hostinger example as closely as possible:
-
-- Service name is `web`
-- Uses `expose`, not `ports`
-- Router name ends with `-web`
-- Cert resolver is `letsencrypt`
-- Service load balancer points to internal port `80`
-- Healthcheck uses the same `wget -q --spider http://127.0.0.1/` pattern, but with a longer startup window because Baserow runs migrations on first boot
+## Compose
 
 ```yaml
 services:
-  web:
-    build:
-      context: https://github.com/ravidulundu/salvador-lead-crm.git#main
-      dockerfile: Dockerfile
+  baserow:
+    image: baserow/baserow:${BASEROW_VERSION:-2.2.2}
     restart: unless-stopped
     expose:
       - "80"
+    env_file:
+      - .env
+    environment:
+      BASEROW_PUBLIC_URL: "https://${BASEROW_DOMAIN:?set BASEROW_DOMAIN}"
+    volumes:
+      - baserow-data:/baserow/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.salvador-lead-crm-web.rule=Host(`crm.dulunduztec.com.br`)"
-      - "traefik.http.routers.salvador-lead-crm-web.entrypoints=websecure"
-      - "traefik.http.routers.salvador-lead-crm-web.tls=true"
-      - "traefik.http.routers.salvador-lead-crm-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.salvador-lead-crm-web.loadbalancer.server.port=80"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:?set TRAEFIK_ROUTER_NAME}.rule=Host(`${BASEROW_DOMAIN:?set BASEROW_DOMAIN}`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.tls=true"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${TRAEFIK_SERVICE_NAME:?set TRAEFIK_SERVICE_NAME}.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  baserow-data:
 ```
-
-## Suggested Leads table fields
-
-- Business Name
-- Category
-- Neighborhood
-- Phone / WhatsApp
-- WhatsApp Link
-- Website
-- Instagram
-- Google Maps
-- Visible Problem
-- Offer
-- Quality
-- Priority
-- Status
-- First Message PT-BR
-- First Contact Date
-- Follow-up Date
-- Last Response
-- Notes
-
-## Suggested statuses
-
-- New
-- Verify
-- Verified
-- Contacted
-- Replied
-- Follow-up 1
-- Follow-up 2
-- Meeting
-- Proposal
-- Won
-- Lost
-- Not Fit
 
 ## Data files
 
-- `data/salvador_b2b_leads_50.csv` — first 50 raw leads
-- `data/salvador_A18_outreach_pack.csv` — A-quality outreach pack
+- `data/salvador_b2b_leads_50.csv`
+- `data/salvador_A18_outreach_pack.csv`

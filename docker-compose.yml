@@ -1,31 +1,28 @@
 services:
-  web:
-    build:
-      context: https://github.com/ravidulundu/salvador-lead-crm.git#main
-      dockerfile: Dockerfile
+  baserow:
+    image: baserow/baserow:${BASEROW_VERSION:-2.2.2}
     restart: unless-stopped
     expose:
       - "80"
+    env_file:
+      - .env
     environment:
-      BASEROW_PUBLIC_URL: ${BASEROW_PUBLIC_URL}
-      SECRET_KEY: ${BASEROW_SECRET_KEY}
-      BASEROW_EXTRA_ALLOWED_HOSTS: ${CRM_DOMAIN}
-      BASEROW_CADDY_ADDRESSES: ":80"
+      BASEROW_PUBLIC_URL: "https://${BASEROW_DOMAIN:?set BASEROW_DOMAIN}"
     volumes:
-      - baserow_data:/baserow/data
+      - baserow-data:/baserow/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.salvador-lead-crm-web.rule=Host(`crm.dulunduztec.com.br`)"
-      - "traefik.http.routers.salvador-lead-crm-web.entrypoints=websecure"
-      - "traefik.http.routers.salvador-lead-crm-web.tls=true"
-      - "traefik.http.routers.salvador-lead-crm-web.tls.certresolver=letsencrypt"
-      - "traefik.http.services.salvador-lead-crm-web.loadbalancer.server.port=80"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:?set TRAEFIK_ROUTER_NAME}.rule=Host(`${BASEROW_DOMAIN:?set BASEROW_DOMAIN}`)"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.tls=true"
+      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${TRAEFIK_SERVICE_NAME:?set TRAEFIK_SERVICE_NAME}.loadbalancer.server.port=80"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/"]
       interval: 30s
       timeout: 10s
-      retries: 10
-      start_period: 180s
+      retries: 5
+      start_period: 60s
 
 volumes:
-  baserow_data:
+  baserow-data:
