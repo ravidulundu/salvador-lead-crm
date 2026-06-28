@@ -59,7 +59,7 @@ The compose now mirrors your working Hostinger example as closely as possible:
 - Router name ends with `-web`
 - Cert resolver is `letsencrypt`
 - Service load balancer points to internal port `80`
-- Healthcheck uses the same `wget -q --spider http://127.0.0.1/` pattern
+- Healthcheck uses the same `wget -q --spider http://127.0.0.1/` pattern, but with a longer startup window because Baserow runs migrations on first boot
 
 ```yaml
 services:
