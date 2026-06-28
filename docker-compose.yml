@@ -14,10 +14,11 @@ services:
       - baserow_data:/baserow/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.salvador-lead-crm.rule=Host(`${CRM_DOMAIN}`)"
+      - "traefik.http.routers.salvador-lead-crm.rule=Host(`crm.dulunduztec.com.br`)"
       - "traefik.http.routers.salvador-lead-crm.entrypoints=websecure"
       - "traefik.http.routers.salvador-lead-crm.tls=true"
       - "traefik.http.routers.salvador-lead-crm.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.salvador-lead-crm.service=salvador-lead-crm"
       - "traefik.http.services.salvador-lead-crm.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/api/_health/ || curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]

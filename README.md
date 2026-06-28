@@ -19,7 +19,7 @@ Required variables:
 
 | Variable | Example | Notes |
 |---|---|---|
-| `CRM_DOMAIN` | `crm.dulunduztec.com.br` | Domain routed by Traefik |
+| `CRM_DOMAIN` | `crm.dulunduztec.com.br` | Kept for Baserow allowed hosts; Traefik label is hardcoded to avoid Hostinger label interpolation issues |
 | `BASEROW_PUBLIC_URL` | `https://crm.dulunduztec.com.br` | Public Baserow URL |
 | `BASEROW_SECRET_KEY` | long random string | Required secret |
 
@@ -49,7 +49,7 @@ expose:
   - "80"
 labels:
   - "traefik.enable=true"
-  - "traefik.http.routers.salvador-lead-crm.rule=Host(`${CRM_DOMAIN}`)"
+  - "traefik.http.routers.salvador-lead-crm.rule=Host(`crm.dulunduztec.com.br`)"
   - "traefik.http.routers.salvador-lead-crm.entrypoints=websecure"
   - "traefik.http.routers.salvador-lead-crm.tls=true"
   - "traefik.http.routers.salvador-lead-crm.tls.certresolver=letsencrypt"
