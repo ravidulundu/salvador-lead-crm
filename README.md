@@ -10,55 +10,51 @@ Use this repository in Hostinger Docker Manager:
 https://github.com/ravidulundu/salvador-lead-crm
 ```
 
-The compose follows the provided working Hostinger/Traefik pattern for Baserow.
-
-## Required `.env` / environment variables
+## Required environment variables
 
 ```env
-BASEROW_VERSION=2.2.2
-BASEROW_DOMAIN=crm.dulunduztec.com.br
-TRAEFIK_ROUTER_NAME=salvador-lead-crm
-TRAEFIK_SERVICE_NAME=salvador-lead-crm
-SECRET_KEY=CHANGE_ME_LONG_RANDOM_SECRET
+CRM_DOMAIN=crm.dulunduztec.com.br
+BASEROW_SECRET_KEY=CHANGE...
 ```
 
-Generate `SECRET_KEY`:
+Generate secret:
 
 ```bash
 openssl rand -base64 48
 ```
 
-## Compose
+## Current compose
 
 ```yaml
 services:
   baserow:
-    image: baserow/baserow:${BASEROW_VERSION:-2.2.2}
+    image: baserow/baserow:latest
     restart: unless-stopped
     expose:
       - "80"
-    env_file:
-      - .env
     environment:
-      BASEROW_PUBLIC_URL: "https://${BASEROW_DOMAIN:?set BASEROW_DOMAIN}"
+      BASEROW_PUBLIC_URL: "https://${CRM_DOMAIN:?set CRM_DOMAIN}"
+      SECRET_KEY: "${BASEROW_SECRET_KEY:?set BASEROW_SECRET_KEY}"
+      BASEROW_EXTRA_ALLOWED_HOSTS: "${CRM_DOMAIN:?set CRM_DOMAIN}"
     volumes:
-      - baserow-data:/baserow/data
+      - baserow_data:/baserow/data
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME:?set TRAEFIK_ROUTER_NAME}.rule=Host(`${BASEROW_DOMAIN:?set BASEROW_DOMAIN}`)"
-      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.tls=true"
-      - "traefik.http.routers.${TRAEFIK_ROUTER_NAME}.tls.certresolver=letsencrypt"
-      - "traefik.http.services.${TRAEFIK_SERVICE_NAME:?set TRAEFIK_SERVICE_NAME}.loadbalancer.server.port=80"
+      - "traefik.http.routers.salvador-lead-crm.rule=Host(`${CRM_DOMAIN:?set CRM_DOMAIN}`)"
+      - "traefik.http.routers.salvador-lead-crm.entrypoints=websecure"
+      - "traefik.http.routers.salvador-lead-crm.tls=true"
+      - "traefik.http.routers.salvador-lead-crm.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.salvador-lead-crm.service=salvador-lead-crm"
+      - "traefik.http.services.salvador-lead-crm.loadbalancer.server.port=80"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1/"]
+      test: ["CMD-SHELL", "curl -fsS -H \"Host: ${CRM_DOMAIN}\" http://127.0.0.1/ >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 90s
 
 volumes:
-  baserow-data:
+  baserow_data:
 ```
 
 ## Data files
