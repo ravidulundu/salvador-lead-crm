@@ -42,35 +42,28 @@ openssl rand -base64 48
 
 ## Traefik labels
 
-The compose uses the same Hostinger/Traefik pattern as the working `dulunduztec.com.br` app:
+The compose now mirrors your working Hostinger example as closely as possible:
+
+- Service name is `web`
+- Uses `expose`, not `ports`
+- Router name ends with `-web`
+- Cert resolver is `letsencrypt`
+- Service load balancer points to internal port `80`
 
 ```yaml
-expose:
-  - "80"
-labels:
-  - "traefik.enable=true"
-  - "traefik.http.routers.salvador-lead-crm.rule=Host(`crm.dulunduztec.com.br`)"
-  - "traefik.http.routers.salvador-lead-crm.entrypoints=websecure"
-  - "traefik.http.routers.salvador-lead-crm.tls=true"
-  - "traefik.http.routers.salvador-lead-crm.tls.certresolver=letsencrypt"
-  - "traefik.http.services.salvador-lead-crm.loadbalancer.server.port=80"
-```
-
-## Baserow API token
-
-After login:
-
-1. Open Baserow.
-2. Create a workspace/database.
-3. Go to user settings or database settings.
-4. Create a database/API token.
-5. Grant read/write permissions to the leads table.
-6. Give Neil the token through a safer channel or rotate after setup.
-
-Baserow API base URL:
-
-```text
-https://crm.dulunduztec.com.br/api/
+services:
+  web:
+    image: baserow/baserow:latest
+    restart: unless-stopped
+    expose:
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.salvador-lead-crm-web.rule=Host(`crm.dulunduztec.com.br`)"
+      - "traefik.http.routers.salvador-lead-crm-web.entrypoints=websecure"
+      - "traefik.http.routers.salvador-lead-crm-web.tls=true"
+      - "traefik.http.routers.salvador-lead-crm-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.salvador-lead-crm-web.loadbalancer.server.port=80"
 ```
 
 ## Suggested Leads table fields
