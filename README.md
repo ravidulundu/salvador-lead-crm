@@ -46,12 +46,6 @@ services:
       - "traefik.http.routers.salvador-lead-crm.tls.certresolver=letsencrypt"
       - "traefik.http.routers.salvador-lead-crm.service=salvador-lead-crm"
       - "traefik.http.services.salvador-lead-crm.loadbalancer.server.port=80"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -H \"Host: ${CRM_DOMAIN}\" http://127.0.0.1/ >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 90s
 
 volumes:
   baserow_data:
@@ -61,3 +55,7 @@ volumes:
 
 - `data/salvador_b2b_leads_50.csv`
 - `data/salvador_A18_outreach_pack.csv`
+
+## Note about healthcheck
+
+No Docker healthcheck is configured. On Hostinger, a failing container healthcheck can remove the service from Traefik routing and produce the plain `404 page not found` screen even when the container has been running. Baserow first boot and onboarding can make root-page healthchecks unreliable, so routing is left to Traefik labels only.
