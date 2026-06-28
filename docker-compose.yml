@@ -9,6 +9,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nocodb} -d ${POSTGRES_DB:-nocodb}"]
       interval: 10s
@@ -22,16 +24,36 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Hostinger/Traefik should route traffic via labels below.
+    # Local binding is kept on 127.0.0.1 only for emergency/debug access, not public exposure.
     ports:
-      - "${NOCODB_PORT:-8080}:8080"
+      - "127.0.0.1:${NOCODB_PORT:-8080}:8080"
     environment:
       NC_DB: "pg://postgres:5432?u=${POSTGRES_USER:-nocodb}&p=${POSTGRES_PASSWORD}&d=${POSTGRES_DB:-nocodb}"
       NC_AUTH_JWT_SECRET: ${NC_AUTH_JWT_SECRET}
-      NC_PUBLIC_URL: ${NC_PUBLIC_URL:-}
+      NC_PUBLIC_URL: ${NC_PUBLIC_URL}
       NC_DISABLE_TELE: "true"
     volumes:
       - nocodb_data:/usr/app/data
+    networks:
+      - internal
+      - traefik
+    labels:
+      - "traefik.enable=${TRAEFIK_ENABLE:-true}"
+      - "traefik.docker.network=${TRAEFIK_NETWORK:-traefik}"
+      - "traefik.http.routers.salvador-lead-crm.rule=Host(`${CRM_DOMAIN}`)"
+      - "traefik.http.routers.salvador-lead-crm.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.salvador-lead-crm.tls=true"
+      - "traefik.http.routers.salvador-lead-crm.tls.certresolver=${TRAEFIK_CERTRESOLVER:-cloudflare}"
+      - "traefik.http.services.salvador-lead-crm.loadbalancer.server.port=8080"
 
 volumes:
   postgres_data:
   nocodb_data:
+
+networks:
+  internal:
+    driver: bridge
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}
