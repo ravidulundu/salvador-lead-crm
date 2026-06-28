@@ -29,6 +29,16 @@ Generate secret locally:
 openssl rand -base64 48
 ```
 
+## Dockerfile wrapper
+
+Hostinger's working examples use `build.context` with a GitHub URL. This project follows that pattern with a tiny `Dockerfile`:
+
+```Dockerfile
+FROM baserow/baserow:latest
+```
+
+So Hostinger builds from this repo while still running the official Baserow image.
+
 ## Hostinger Docker Manager deploy
 
 1. Create/verify DNS record for `crm.dulunduztec.com.br`.
@@ -54,7 +64,9 @@ The compose now mirrors your working Hostinger example as closely as possible:
 ```yaml
 services:
   web:
-    image: baserow/baserow:latest
+    build:
+      context: https://github.com/ravidulundu/salvador-lead-crm.git#main
+      dockerfile: Dockerfile
     restart: unless-stopped
     expose:
       - "80"

@@ -1,6 +1,8 @@
 services:
   web:
-    image: baserow/baserow:latest
+    build:
+      context: https://github.com/ravidulundu/salvador-lead-crm.git#main
+      dockerfile: Dockerfile
     restart: unless-stopped
     expose:
       - "80"
